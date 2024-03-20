@@ -1,5 +1,7 @@
 trigger:
-- release/rocm-rel-6.0
+  branches:
+    include:
+    - releases/rocm-rel-6.0
 
 pool: NV31
 
