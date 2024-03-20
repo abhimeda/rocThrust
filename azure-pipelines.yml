@@ -1,5 +1,5 @@
 trigger:
-- develop
+- release/rocm-rel-6.0
 
 pool: NV31
 
