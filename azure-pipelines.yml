@@ -1,0 +1,27 @@
+trigger:
+  - releases/rocm-rel-6.0
+
+pool: NV31
+
+steps:
+- checkout: self
+- script: |
+    mkdir build
+    cd build
+    CXX=hipcc cmake -D CMAKE_CXX_COMPILER=hipcc \
+    -D CMAKE_BUILD_TYPE=Release -DROCM_PATH=/opt/rocm \
+    -DCMAKE_PREFIX_PATH=/opt/rocm -DCPACK_SET_DESTDIR=OFF \
+    -DCPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF -D BUILD_TEST=ON \
+    -D BUILD_BENCHMARK=ON -D BUILD_EXAMPLE=ON \
+    -D AMDGPU_TARGETS="gfx1100;gfx1101;gfx1102" \
+    -D AMDGPU_TESTTARGETS="gfx1100;gfx1101;gfx1102" ../.
+  displayName: 'Build Prep'
+- script: |
+    cd build
+    make -j16
+  displayName: 'Build'
+  
+- script: |
+    cd build
+    ctest --output-on-failure
+  displayName: 'Test'
