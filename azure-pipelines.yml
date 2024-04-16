@@ -1,34 +1,79 @@
-trigger:
-  - releases/rocm-rel-6.0
+# trigger:
+#   - releases/rocm-rel-6.0
 
-pool: gfx1100
+# pool: gfx1100
 
-steps:
-- checkout: self
-- script: |
-    mkdir build
-    cd build
-    CXX=hipcc cmake -D CMAKE_CXX_COMPILER=hipcc \
-    -D CMAKE_BUILD_TYPE=Release -DROCM_PATH=/opt/rocm \
-    -DCMAKE_PREFIX_PATH=/opt/rocm -DCPACK_SET_DESTDIR=OFF \
-    -DCPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF -D BUILD_TEST=ON \
-    -D BUILD_BENCHMARK=ON -D BUILD_EXAMPLE=ON \
-    -D AMDGPU_TARGETS="gfx1100;gfx1101;gfx1102" \
-    -D AMDGPU_TESTTARGETS="gfx1100;gfx1101;gfx1102" ../.
-  displayName: 'Build Prep'
-- script: |
-    cd build
-    make -j16
-  displayName: 'Build'
+# steps:
+# - checkout: self
+# - script: |
+#     mkdir build
+#     cd build
+#     CXX=hipcc cmake -D CMAKE_CXX_COMPILER=hipcc \
+#     -D CMAKE_BUILD_TYPE=Release -DROCM_PATH=/opt/rocm \
+#     -DCMAKE_PREFIX_PATH=/opt/rocm -DCPACK_SET_DESTDIR=OFF \
+#     -DCPACK_INCLUDE_TOPLEVEL_DIRECTORY=OFF -D BUILD_TEST=ON \
+#     -D BUILD_BENCHMARK=ON -D BUILD_EXAMPLE=ON \
+#     -D AMDGPU_TARGETS="gfx1100;gfx1101;gfx1102" \
+#     -D AMDGPU_TESTTARGETS="gfx1100;gfx1101;gfx1102" ../.
+#   displayName: 'Build Prep'
+# - script: |
+#     cd build
+#     make -j16
+#   displayName: 'Build'
   
-- script: |
-    cd build
-    ctest --output-on-failure --output-junit output.xml
-  displayName: 'Testing'
+# - script: |
+#     cd build
+#     ctest --output-on-failure --output-junit output.xml
+#   displayName: 'Testing'
 
-- task: PublishTestResults@2
-  inputs:
-    testResultsFormat: 'junit'
-    testResultsFiles: '**/build/output.xml' 
-  condition: succeededOrFailed()
-  displayName: 'Test Results'
+# - task: PublishTestResults@2
+#   inputs:
+#     testResultsFormat: 'junit'
+#     testResultsFiles: '**/build/output.xml' 
+#   condition: succeededOrFailed()
+#   displayName: 'Test Results'
+
+resources:
+  repositories:
+  - repository: pipelines_repo
+    type: github
+    endpoint: github.com_amd-jmacaran
+    name: amd-jmacaran/pipelines
+  
+
+variables:
+- group: common
+- template: /.azuredevops/variables-global.yml@pipelines_repo
+
+trigger:
+  batch: true
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - .github
+    - docs
+    - '**/README.md'
+    - '.*'
+    - LICENSE.txt
+    - README.md
+
+pr:
+  autoCancel: true
+  branches:
+    include:
+    - master
+  paths:
+    exclude:
+    - .github
+    - docs
+    - '**/README.md'
+    - '.*'
+    - LICENSE.txt
+    - README.md
+  drafts: false
+
+jobs:
+  - template: ${{ variables.CI_COMPONENT_PATH }}/rocThrust.yml@pipelines_repo
+  
